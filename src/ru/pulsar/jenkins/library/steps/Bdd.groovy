@@ -18,7 +18,8 @@ class Bdd implements Serializable {
         IStepExecutor steps = ContextRegistry.getContext().getStepExecutor()
 
         Logger.printLocation()
-
+        Logger.println("Hellow from Gershon")
+        
         if (!config.stageFlags.bdd) {
             Logger.println("BDD step is disabled")
             return
