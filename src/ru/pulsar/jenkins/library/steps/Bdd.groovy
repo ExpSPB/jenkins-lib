@@ -39,9 +39,6 @@ class Bdd implements Serializable {
             }
         }
 
-        steps.zip("./build/ib", "./build/db.zip")
-        steps.archiveArtifacts("./build/db.zip", false)
-
         steps.stash('bdd-allure', 'build/out/allure/**', true)
         steps.stash('bdd-cucumber', 'build/out/cucumber/**', true)
     }
