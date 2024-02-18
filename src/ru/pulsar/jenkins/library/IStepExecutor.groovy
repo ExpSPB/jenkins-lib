@@ -55,7 +55,7 @@ interface IStepExecutor {
 
     def withEnv(List<String> strings, Closure body)
 
-    def archiveArtifacts(String path)
+    def archiveArtifacts(String path, boolean onlyIfSuccessful)
 
     def stash(String name, String includes)
 
