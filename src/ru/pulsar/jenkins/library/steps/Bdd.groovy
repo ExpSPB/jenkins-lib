@@ -18,7 +18,6 @@ class Bdd implements Serializable {
         IStepExecutor steps = ContextRegistry.getContext().getStepExecutor()
 
         Logger.printLocation()
-        Logger.println("Hellow from Gershon")
         
         if (!config.stageFlags.bdd) {
             Logger.println("BDD step is disabled")
@@ -40,6 +39,9 @@ class Bdd implements Serializable {
             }
         }
 
+        steps.zip("./build/ib", "./build/db.zip")
+        steps.archiveArtifacts("./build/db.zip")
+        
         steps.stash('bdd-allure', 'build/out/allure/**', true)
         steps.stash('bdd-cucumber', 'build/out/cucumber/**', true)
     }

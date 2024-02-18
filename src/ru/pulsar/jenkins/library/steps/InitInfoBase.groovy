@@ -19,7 +19,6 @@ class InitInfoBase implements Serializable {
         IStepExecutor steps = ContextRegistry.getContext().getStepExecutor()
 
         Logger.printLocation()
-        Logger.println("Привет от Гершона")
 
         steps.createDir('build/out')
 
