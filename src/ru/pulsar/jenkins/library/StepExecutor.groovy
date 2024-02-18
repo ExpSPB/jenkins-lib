@@ -127,8 +127,8 @@ class StepExecutor implements IStepExecutor {
     }
 
     @Override
-    def archiveArtifacts(String path) {
-        steps.archiveArtifacts path
+    def archiveArtifacts(String path, boolean onlyIfSuccessful = true) {
+        steps.archiveArtifacts artifacts: path, onlyIfSuccessful: onlyIfSuccessful
     }
 
     @Override
