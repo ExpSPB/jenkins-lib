@@ -76,11 +76,30 @@ void call() {
                                 }
 
                                 stages {
+                                    stage('Сборка расширений из исходников') {
+                                        when {
+                                            expression { config.needLoadExtensions() }
+                                        }
+                                        steps {
+                                            timeout(time: config.timeoutOptions.getBinaries, unit: TimeUnit.MINUTES) {
+                                                createDir('build/out/cfe')
+                                                // Соберем или загрузим cfe из исходников и положим их в папку build/out/cfe
+                                                getExtensions config
+                                            }
+                                        }
+                                    }
                                     stage('Создание ИБ') {
                                         steps {
                                             timeout(time: config.timeoutOptions.createInfoBase, unit: TimeUnit.MINUTES) {
-                                                createDir('build/out')
+                                                createDir('build/out/')
+                                                    createInfobase config
+                                            }
+                                        }
+                                    }
 
+                                    stage('Загрузка конфигурации') {
+                                        steps {
+                                            timeout(time: config.timeoutOptions.loadConfiguration, unit: TimeUnit.MINUTES) {
                                                 script {
                                                     if (config.infoBaseFromFiles()) {
                                                         // Создание базы загрузкой из файлов
@@ -90,6 +109,18 @@ void call() {
                                                         initFromStorage config
                                                     }
                                                 }
+                                            }
+                                        }
+                                    }
+
+                                    stage('Загрузка расширений в конфигурацию'){
+                                        when {
+                                            beforeAgent true
+                                            expression { config.needLoadExtensions() }
+                                        }
+                                        steps {
+                                            timeout(time: config.timeoutOptions.loadExtensions, unit: TimeUnit.MINUTES) {
+                                                loadExtensions config, 'initInfoBase'
                                             }
                                         }
                                     }
@@ -107,12 +138,13 @@ void call() {
                                         }
                                     }
 
+
                                     stage('Архивация ИБ') {
                                         steps {
                                             timeout(time: config.timeoutOptions.zipInfoBase, unit: TimeUnit.MINUTES) {
                                                 printLocation()
 
-                                                zipInfobase()
+                                                zipInfobase config, 'initInfoBase'
                                             }
                                         }
                                     }
@@ -179,11 +211,41 @@ void call() {
                             beforeAgent true
                             expression { config.stageFlags.bdd }
                         }
-                        steps {
-                            timeout(time: config.timeoutOptions.bdd, unit: TimeUnit.MINUTES) {
-                                unzipInfobase()
+                        stages {
+                            stage('Распаковка ИБ') {
+                                steps {
+                                    unzipInfobase()
+                                }
+                            }
 
-                                bdd config
+                            stage('Загрузка расширений в конфигурацию') {
+                                when {
+                                    beforeAgent true
+                                    expression { config.needLoadExtensions('bdd') }
+                                }
+                                steps {
+                                    timeout(time: config.timeoutOptions.loadExtensions, unit: TimeUnit.MINUTES) {
+                                        loadExtensions config, 'bdd'
+                                    }
+                                }
+                            }
+
+                            stage('Выполнение BDD сценариев') {
+                                steps {
+                                    timeout(time: config.timeoutOptions.bdd, unit: TimeUnit.MINUTES) {
+                                        bdd config
+                                    }
+                                }
+                            }
+
+                            stage('Архивация ИБ') {
+                                steps {
+                                    timeout(time: config.timeoutOptions.zipInfoBase, unit: TimeUnit.MINUTES) {
+                                        printLocation()
+
+                                        zipInfobase config, 'bdd'
+                                    }
+                                }
                             }
                         }
                     }
@@ -196,9 +258,19 @@ void call() {
                             beforeAgent true
                             expression { config.stageFlags.syntaxCheck }
                         }
-                        steps {
-                            timeout(time: config.timeoutOptions.syntaxCheck, unit: TimeUnit.MINUTES) {
-                                syntaxCheck config
+                        stages {
+                            stage('Распаковка ИБ') {
+                                steps {
+                                    unzipInfobase()
+                                }
+                            }
+
+                            stage('Выполнение синтаксического контроля') {
+                                steps {
+                                    timeout(time: config.timeoutOptions.syntaxCheck, unit: TimeUnit.MINUTES) {
+                                        syntaxCheck config
+                                    }
+                                }
                             }
                         }
                     }
@@ -211,11 +283,68 @@ void call() {
                             beforeAgent true
                             expression { config.stageFlags.smoke }
                         }
-                        steps {
-                            timeout(time: config.timeoutOptions.smoke, unit: TimeUnit.MINUTES) {
-                                unzipInfobase()
+                        stages {
+                            stage('Распаковка ИБ') {
+                                steps {
+                                    unzipInfobase()
+                                }
+                            }
 
-                                smoke config
+                            stage('Загрузка расширений в конфигурацию') {
+                                when {
+                                    beforeAgent true
+                                    expression { config.needLoadExtensions('smoke') }
+                                }
+                                steps {
+                                    timeout(time: config.timeoutOptions.loadExtensions, unit: TimeUnit.MINUTES) {
+                                        loadExtensions config, 'smoke'
+                                    }
+                                }
+                            }
+
+                            stage('Выполнение дымовых тестов') {
+                                steps {
+                                    timeout(time: config.timeoutOptions.smoke, unit: TimeUnit.MINUTES) {
+                                        smoke config
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    stage('YAXUnit тесты') {
+                        agent {
+                            label agent1C
+                        }
+                        when {
+                            beforeAgent true
+                            expression { config.stageFlags.yaxunit }
+                        }
+                        stages {
+                            stage('Распаковка ИБ') {
+                                steps {
+                                    unzipInfobase()
+                                }
+                            }
+
+                            stage('Загрузка расширений в конфигурацию') {
+                                when {
+                                    beforeAgent true
+                                    expression { config.needLoadExtensions('yaxunit') }
+                                }
+                                steps {
+                                    timeout(time: config.timeoutOptions.loadExtensions, unit: TimeUnit.MINUTES) {
+                                        loadExtensions config, 'yaxunit'
+                                    }
+                                }
+                            }
+
+                            stage('Выполнение YAXUnit тестов') {
+                                steps {
+                                    timeout(time: config.timeoutOptions.yaxunit, unit: TimeUnit.MINUTES) {
+                                        yaxunit config
+                                    }
+                                }
                             }
                         }
                     }

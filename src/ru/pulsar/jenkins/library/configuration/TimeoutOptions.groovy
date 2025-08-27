@@ -11,15 +11,30 @@ class TimeoutOptions implements Serializable {
     ''')
     Integer edtToDesignerFormatTransformation
 
+    @JsonPropertyDescription('''Таймаут шага получения бинарников, в минутах.
+    По умолчанию содержит значение 60.
+    ''')
+    Integer getBinaries
+
     @JsonPropertyDescription('''Таймаут шага создания информационной базы, в минутах.
     По умолчанию содержит значение 60.
     ''')
     Integer createInfoBase
 
+    @JsonPropertyDescription('''Таймаут шага загрузки конфигурации в базу, в минутах.
+    По умолчанию содержит значение 60.
+    ''')
+    Integer loadConfiguration
+
     @JsonPropertyDescription('''Таймаут шага инициализации информационной базы, в минутах.
     По умолчанию содержит значение 60.
     ''')
     Integer initInfoBase
+
+    @JsonPropertyDescription('''Таймаут шага загрузки расширений в базу, в минутах.
+    По умолчанию содержит значение 60.
+    ''')
+    Integer loadExtensions
 
     @JsonPropertyDescription('''Таймаут шага архивирования информационной базы, в минутах.
     По умолчанию содержит значение 60.
@@ -55,6 +70,11 @@ class TimeoutOptions implements Serializable {
     По умолчанию содержит значение 240.
     ''')
     Integer smoke
+
+    @JsonPropertyDescription('''Таймаут шага YAXUnit тестов, в минутах.
+    По умолчанию содержит значение 240.
+    ''')
+    Integer yaxunit
 
     @JsonPropertyDescription('''Таймаут шага статического анализа SonarQube, в минутах.
     По умолчанию содержит значение 90.

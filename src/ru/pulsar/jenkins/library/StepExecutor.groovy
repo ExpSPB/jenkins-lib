@@ -1,12 +1,17 @@
 package ru.pulsar.jenkins.library
 
+import hudson.FilePath
 import jenkins.plugins.http_request.HttpMode
 import jenkins.plugins.http_request.MimeType
 import jenkins.plugins.http_request.ResponseContentSupplier
 import org.jenkinsci.plugins.pipeline.utility.steps.fs.FileWrapper
 import org.jenkinsci.plugins.workflow.support.actions.EnvironmentAction
 import org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper
+import ru.pulsar.jenkins.library.configuration.JobConfiguration
+import ru.pulsar.jenkins.library.configuration.StepCoverageOptions
+import ru.pulsar.jenkins.library.steps.Coverable
 import ru.yandex.qatools.allure.jenkins.config.ResultsConfig
+import sp.sd.fileoperations.FileOperation
 
 class StepExecutor implements IStepExecutor {
 
@@ -22,13 +27,13 @@ class StepExecutor implements IStepExecutor {
     }
 
     @Override
-    int sh(String script, boolean returnStatus, String encoding) {
-        steps.sh script: script, returnStatus: returnStatus, encoding: encoding
+    def sh(String script, boolean returnStatus, boolean returnStdout, String encoding) {
+        steps.sh script: script, returnStatus: returnStatus, returnStdout: returnStdout, encoding: encoding
     }
 
     @Override
-    int bat(String script, boolean returnStatus, String encoding) {
-        steps.bat script: script, returnStatus: returnStatus, encoding: encoding
+    def bat(String script, boolean returnStatus, boolean returnStdout, String encoding) {
+        steps.bat script: script, returnStatus: returnStatus, returnStdout: returnStdout, encoding: encoding
     }
 
     @Override
@@ -42,8 +47,23 @@ class StepExecutor implements IStepExecutor {
     }
 
     @Override
+    void writeFile(String file, String text, String encoding = 'UTF-8') {
+        steps.writeFile encoding: encoding, file: file, text: text
+    }
+
+    @Override
     boolean fileExists(String file) {
         steps.fileExists file
+    }
+
+    @Override
+    void fileOperations(List<FileOperation> fileOperations) {
+        steps.fileOperations fileOperations
+    }
+
+    @Override
+    void fileDeleteOperation(String includes) {
+        steps.fileDeleteOperation includes: includes, excludes: '', useDefaultExcludes: true
     }
 
     @Override
@@ -57,8 +77,25 @@ class StepExecutor implements IStepExecutor {
     }
 
     @Override
-    int cmd(String script, boolean returnStatus = false) {
-        return steps.cmd(script, returnStatus)
+    def cmd(String script, boolean returnStatus = false, boolean returnStdout = false) {
+        return steps.cmd(script, returnStatus, returnStdout)
+    }
+
+    @Override
+    def ringCommand(String script) {
+        return steps.ringCommand(script)
+    }
+
+    @Override
+    void start(String executable, String params) {
+        if (executable == null || executable.trim().isEmpty()) {
+            throw new IllegalArgumentException("executable не может быть пустым")
+        }
+        try {
+            steps.start(executable, params)
+        } catch (Exception e) {
+            throw new RuntimeException("Ошибка при запуске процесса: ${e.message}", e)
+        }
     }
 
     @Override
@@ -120,8 +157,27 @@ class StepExecutor implements IStepExecutor {
     }
 
     @Override
+    void deleteDir(FilePath path) {
+        steps.dir(path.getRemote()) {
+            steps.deleteDir()
+        }
+    }
+
+    @Override
     def withEnv(List<String> strings, Closure body) {
         steps.withEnv(strings) {
+            body()
+        }
+    }
+
+    @Override
+    def withCoverage(JobConfiguration config, Coverable stage, StepCoverageOptions options, Closure body) {
+        steps.withCoverage(config, stage, options, body)
+    }
+
+    @Override
+    def lock(String resource, Closure body) {
+        steps.lock(resource: resource) {
             body()
         }
     }
@@ -142,8 +198,18 @@ class StepExecutor implements IStepExecutor {
     }
 
     @Override
+    def unstable(String message) {
+        steps.unstable message
+    }
+
+    @Override
     def zip(String dir, String zipFile, String glob = '') {
         steps.zip dir: dir, zipFile: zipFile, glob: glob, overwrite: true
+    }
+
+    @Override
+    def zip(String dir, String zipFile, String glob = '', boolean archive) {
+        steps.zip dir: dir, zipFile: zipFile, glob: glob, overwrite: true, archive: archive
     }
 
     @Override

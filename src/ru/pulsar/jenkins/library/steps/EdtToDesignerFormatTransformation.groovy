@@ -1,12 +1,10 @@
 package ru.pulsar.jenkins.library.steps
 
-
+import ru.pulsar.jenkins.library.edt.EdtCliEngineFactory
 import ru.pulsar.jenkins.library.IStepExecutor
 import ru.pulsar.jenkins.library.configuration.JobConfiguration
 import ru.pulsar.jenkins.library.configuration.SourceFormat
 import ru.pulsar.jenkins.library.ioc.ContextRegistry
-import ru.pulsar.jenkins.library.utils.Constants
-import ru.pulsar.jenkins.library.utils.EDT
 import ru.pulsar.jenkins.library.utils.FileUtils
 import ru.pulsar.jenkins.library.utils.Logger
 
@@ -16,6 +14,9 @@ class EdtToDesignerFormatTransformation implements Serializable {
     public static final String CONFIGURATION_DIR = 'build/cfg'
     public static final String CONFIGURATION_ZIP = 'build/cfg.zip'
     public static final String CONFIGURATION_ZIP_STASH = 'cfg-zip'
+    public static final String EXTENSION_DIR = 'build/cfe_src'
+    public static final String EXTENSION_ZIP = 'build/cfe_src.zip'
+    public static final String EXTENSION_ZIP_STASH = 'cfe_src-zip'
 
     private final JobConfiguration config;
 
@@ -35,26 +36,21 @@ class EdtToDesignerFormatTransformation implements Serializable {
 
         def env = steps.env();
 
-        def srcDir = config.srcDir
-        def projectDir = FileUtils.getFilePath("$env.WORKSPACE/$srcDir")
-        def workspaceDir = FileUtils.getFilePath("$env.WORKSPACE/$WORKSPACE")
-        def configurationRoot = FileUtils.getFilePath("$env.WORKSPACE/$CONFIGURATION_DIR")
-        def edtVersionForRing = EDT.ringModule(config)
+        String workspaceDir = FileUtils.getFilePath("$env.WORKSPACE/$WORKSPACE").getRemote()
+        steps.deleteDir(workspaceDir)
 
-        steps.deleteDir(workspaceDir.getRemote())
-        steps.deleteDir(configurationRoot.getRemote())
+        def engine = EdtCliEngineFactory.getEngine(config.edtVersion)
 
-        Logger.println("Конвертация исходников из формата EDT в формат Конфигуратора")
-
-        def ringCommand = "ring $edtVersionForRing workspace export --workspace-location \"$workspaceDir\" --project \"$projectDir\" --configuration-files \"$configurationRoot\""
-
-        def ringOpts = [Constants.DEFAULT_RING_OPTS]
-        steps.withEnv(ringOpts) {
-            steps.cmd(ringCommand)
-        }
-
+        engine.edtToDesignerTransformConfiguration(steps, config)
         steps.zip(CONFIGURATION_DIR, CONFIGURATION_ZIP)
         steps.stash(CONFIGURATION_ZIP_STASH, CONFIGURATION_ZIP)
+
+        if (config.needLoadExtensions()) {
+            engine.edtToDesignerTransformExtensions(steps, config)
+            steps.zip(EXTENSION_DIR, EXTENSION_ZIP)
+            steps.stash(EXTENSION_ZIP_STASH, EXTENSION_ZIP)
+        }
+
     }
 
 }

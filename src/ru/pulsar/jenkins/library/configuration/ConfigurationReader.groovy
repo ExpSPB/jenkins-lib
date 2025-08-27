@@ -14,23 +14,23 @@ import static java.util.Collections.emptySet
 class ConfigurationReader implements Serializable {
 
     private static ObjectMapper mapper
-    private static BeanUtilsBean beanUtilsBean;
+    private static BeanUtilsBean beanUtilsBean
 
     static {
         mapper = new ObjectMapper()
-        mapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
+        mapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
 
         beanUtilsBean = new BeanUtilsBean(new ConvertUtilsBean() {
             @Override
             @NonCPS
             Object convert(String value, Class clazz) {
                 if (clazz.isEnum()) {
-                    return Enum.valueOf(clazz, value);
+                    return Enum.valueOf(clazz, value)
                 } else {
-                    return super.convert(value, clazz);
+                    return super.convert(value, clazz)
                 }
             }
-        });
+        })
     }
 
     private static final String DEFAULT_CONFIGURATION_RESOURCE = 'globalConfiguration.json'
@@ -49,7 +49,7 @@ class ConfigurationReader implements Serializable {
         def globalConfiguration = create()
         def jobConfiguration = mapper.readValue(config, JobConfiguration.class)
 
-        return mergeConfigurations(globalConfiguration, jobConfiguration);
+        return mergeConfigurations(globalConfiguration, jobConfiguration)
     }
 
     private static JobConfiguration mergeConfigurations(
@@ -61,11 +61,15 @@ class ConfigurationReader implements Serializable {
             "stageFlags",
             "timeoutOptions",
             "initInfoBaseOptions",
+            "extensions",
             "bddOptions",
             "sonarQubeOptions",
             "smokeTestOptions",
+            "coverageOptions",
+            "yaxunitOptions",
             "syntaxCheckOptions",
             "resultsTransformOptions",
+            "archiveInfobase",
             "notificationsOptions",
             "emailNotificationOptions",
             "alwaysEmailOptions",
@@ -82,7 +86,7 @@ class ConfigurationReader implements Serializable {
         mergeSyntaxCheckOptions(baseConfiguration.syntaxCheckOptions, configurationToMerge.syntaxCheckOptions)
         mergeNotificationsOptions(baseConfiguration.notificationsOptions, configurationToMerge.notificationsOptions)
 
-        return baseConfiguration;
+        return baseConfiguration
     }
 
     @NonCPS
@@ -93,7 +97,7 @@ class ConfigurationReader implements Serializable {
             .filter({ e -> e.getKey() != "metaClass" })
             .filter({ e -> !nonMergeableSettings.contains(e.getKey()) })
             .forEach { e ->
-                beanUtilsBean.setProperty(baseObject, e.getKey(), e.getValue());
+                beanUtilsBean.setProperty(baseObject, e.getKey(), e.getValue())
             }
 
         nonMergeableSettings.forEach({ key ->
@@ -113,10 +117,28 @@ class ConfigurationReader implements Serializable {
 
     @NonCPS
     private static void mergeInitInfoBaseOptions(InitInfoBaseOptions baseObject, InitInfoBaseOptions objectToMerge) {
-        if (objectToMerge == null || objectToMerge.additionalInitializationSteps == null) {
+        if (objectToMerge == null) {
+            return
+        }
+        mergeInitInfoBaseAdditionalInitializationSteps(baseObject, objectToMerge)
+        mergeInitInfoBaseExtensions(baseObject, objectToMerge)
+    }
+
+    @NonCPS
+    private static void mergeInitInfoBaseAdditionalInitializationSteps(InitInfoBaseOptions baseObject, InitInfoBaseOptions objectToMerge) {
+        if (objectToMerge.additionalInitializationSteps == null) {
             return
         }
         baseObject.additionalInitializationSteps = objectToMerge.additionalInitializationSteps.clone()
+    }
+
+
+    @NonCPS
+    private static void mergeInitInfoBaseExtensions(InitInfoBaseOptions baseObject, InitInfoBaseOptions objectToMerge) {
+        if (objectToMerge.extensions == null) {
+            return
+        }
+        baseObject.extensions = objectToMerge.extensions.clone()
     }
 
     @NonCPS

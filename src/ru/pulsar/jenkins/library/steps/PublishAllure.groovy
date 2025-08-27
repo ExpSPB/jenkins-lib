@@ -9,8 +9,8 @@ import ru.pulsar.jenkins.library.utils.Logger
 
 class PublishAllure implements Serializable {
 
-    private final JobConfiguration config;
-    private IStepExecutor steps;
+    private final JobConfiguration config
+    private IStepExecutor steps
 
     PublishAllure(JobConfiguration config) {
         this.config = config
@@ -31,13 +31,19 @@ class PublishAllure implements Serializable {
             safeUnstash('init-allure')
         }
         if (config.stageFlags.bdd) {
-            safeUnstash('bdd-allure')
+            safeUnstash(Bdd.ALLURE_STASH)
+        }
+        if (config.stageFlags.yaxunit && config.yaxunitOptions.publishToAllureReport) {
+            safeUnstash(Yaxunit.YAXUNIT_ALLURE_STASH)
         }
         if (config.stageFlags.smoke && config.smokeTestOptions.publishToAllureReport) {
-            safeUnstash(SmokeTest.SMOKE_ALLURE_STASH)
+            safeUnstash(SmokeTest.ALLURE_STASH)
+        }
+        if (config.stageFlags.syntaxCheck && config.syntaxCheckOptions.publishToAllureReport) {
+            safeUnstash(SyntaxCheck.ALLURE_STASH)
         }
 
-        def env = steps.env();
+        def env = steps.env()
 
         FilePath allurePath = FileUtils.getFilePath("$env.WORKSPACE/build/out/allure")
         if (!allurePath.exists()) {
@@ -45,7 +51,7 @@ class PublishAllure implements Serializable {
             return
         }
 
-        List<String> results = new ArrayList<>();
+        List<String> results = new ArrayList<>()
 
         allurePath.listDirectories().each { FilePath filePath ->
             results.add(FileUtils.getLocalPath(filePath))
