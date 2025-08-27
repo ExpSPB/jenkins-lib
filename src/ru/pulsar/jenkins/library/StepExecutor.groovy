@@ -7,7 +7,11 @@ import jenkins.plugins.http_request.ResponseContentSupplier
 import org.jenkinsci.plugins.pipeline.utility.steps.fs.FileWrapper
 import org.jenkinsci.plugins.workflow.support.actions.EnvironmentAction
 import org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper
+import ru.pulsar.jenkins.library.configuration.JobConfiguration
+import ru.pulsar.jenkins.library.configuration.StepCoverageOptions
+import ru.pulsar.jenkins.library.steps.Coverable
 import ru.yandex.qatools.allure.jenkins.config.ResultsConfig
+import sp.sd.fileoperations.FileOperation
 
 class StepExecutor implements IStepExecutor {
 
@@ -53,6 +57,16 @@ class StepExecutor implements IStepExecutor {
     }
 
     @Override
+    void fileOperations(List<FileOperation> fileOperations) {
+        steps.fileOperations fileOperations
+    }
+
+    @Override
+    void fileDeleteOperation(String includes) {
+        steps.fileDeleteOperation includes: includes, excludes: '', useDefaultExcludes: true
+    }
+
+    @Override
     FileWrapper[] findFiles(String glob, String excludes = '') {
         steps.findFiles glob: glob, excludes: excludes
     }
@@ -70,6 +84,18 @@ class StepExecutor implements IStepExecutor {
     @Override
     def ringCommand(String script) {
         return steps.ringCommand(script)
+    }
+
+    @Override
+    void start(String executable, String params) {
+        if (executable == null || executable.trim().isEmpty()) {
+            throw new IllegalArgumentException("executable не может быть пустым")
+        }
+        try {
+            steps.start(executable, params)
+        } catch (Exception e) {
+            throw new RuntimeException("Ошибка при запуске процесса: ${e.message}", e)
+        }
     }
 
     @Override
@@ -145,6 +171,18 @@ class StepExecutor implements IStepExecutor {
     }
 
     @Override
+    def withCoverage(JobConfiguration config, Coverable stage, StepCoverageOptions options, Closure body) {
+        steps.withCoverage(config, stage, options, body)
+    }
+
+    @Override
+    def lock(String resource, Closure body) {
+        steps.lock(resource: resource) {
+            body()
+        }
+    }
+
+    @Override
     def archiveArtifacts(String path) {
         steps.archiveArtifacts path
     }
@@ -167,6 +205,11 @@ class StepExecutor implements IStepExecutor {
     @Override
     def zip(String dir, String zipFile, String glob = '') {
         steps.zip dir: dir, zipFile: zipFile, glob: glob, overwrite: true
+    }
+
+    @Override
+    def zip(String dir, String zipFile, String glob = '', boolean archive) {
+        steps.zip dir: dir, zipFile: zipFile, glob: glob, overwrite: true, archive: archive
     }
 
     @Override

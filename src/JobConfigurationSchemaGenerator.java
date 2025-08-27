@@ -15,7 +15,7 @@ import java.io.IOException;
 
 public class JobConfigurationSchemaGenerator {
 
-  public static void main(String[] args) throws Exception {
+  public static void main(String[] args) {
 
     SchemaGeneratorConfigBuilder configBuilder = new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_7, OptionPreset.PLAIN_JSON)
             .with(new JacksonModule(JacksonOption.FLATTENED_ENUMS_FROM_JSONVALUE, JacksonOption.FLATTENED_ENUMS_FROM_JSONPROPERTY));
@@ -33,7 +33,8 @@ public class JobConfigurationSchemaGenerator {
       writer.write(jsonSchema.toPrettyString());
       System.out.println(jsonSchema.toPrettyString());
     } catch (IOException e) {
-      e.printStackTrace();
+        //noinspection CallToPrintStackTrace
+        e.printStackTrace();
     }
   }
 

@@ -7,6 +7,10 @@ import jenkins.plugins.http_request.ResponseContentSupplier
 import org.jenkinsci.plugins.pipeline.utility.steps.fs.FileWrapper
 import org.jenkinsci.plugins.workflow.support.actions.EnvironmentAction
 import org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper
+import ru.pulsar.jenkins.library.configuration.JobConfiguration
+import ru.pulsar.jenkins.library.configuration.StepCoverageOptions
+import ru.pulsar.jenkins.library.steps.Coverable
+import sp.sd.fileoperations.FileOperation
 
 interface IStepExecutor {
 
@@ -20,6 +24,7 @@ interface IStepExecutor {
 
     FileWrapper[] findFiles(String glob)
 
+    @SuppressWarnings('unused')
     FileWrapper[] findFiles(String glob, String excludes)
 
     String readFile(String file)
@@ -30,6 +35,10 @@ interface IStepExecutor {
 
     boolean fileExists(String file)
 
+    void fileOperations(List<FileOperation> fileOperations)
+
+    void fileDeleteOperation(String includes)
+
     void echo(message)
 
     def cmd(String script, boolean returnStatus, boolean returnStdout)
@@ -39,6 +48,8 @@ interface IStepExecutor {
     def cmd(String script)
 
     def ringCommand(String script)
+
+    void start(String executable, String params)
 
     void tool(String toolName)
 
@@ -64,6 +75,10 @@ interface IStepExecutor {
 
     def withEnv(List<String> strings, Closure body)
 
+    def withCoverage(JobConfiguration config, Coverable stage, StepCoverageOptions options, Closure body)
+
+    def lock(String resource, Closure<Object> body)
+
     def archiveArtifacts(String path)
 
     def stash(String name, String includes)
@@ -76,14 +91,19 @@ interface IStepExecutor {
 
     def zip(String dir, String zipFile)
 
+    @SuppressWarnings('unused')
     def zip(String dir, String zipFile, String glob)
+
+    def zip(String dir, String zipFile, String glob, boolean archive)
 
     def unzip(String dir, String zipFile)
 
+    @SuppressWarnings('unused')
     def unzip(String dir, String zipFile, quiet)
 
     def catchError(Closure body)
 
+    @SuppressWarnings('unused')
     ResponseContentSupplier httpRequest(String url, String outputFile, String responseHandle, boolean wrapAsMultipart)
 
     ResponseContentSupplier httpRequest(String url, HttpMode httpMode, MimeType contentType, String requestBody, String validResponseCodes, boolean consoleLogResponseBody)
@@ -107,4 +127,5 @@ interface IStepExecutor {
     def brokenTestsSuspects()
 
     RunWrapper currentBuild()
+
 }

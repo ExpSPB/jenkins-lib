@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonPropertyDescription
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-class BddOptions implements Serializable {
+class BddOptions extends StepCoverageOptions implements Serializable {
 
     @JsonPropertyDescription("""Шаги, запускаемые через vrunner.
     В каждой строке передается отдельная команда 
@@ -16,11 +16,18 @@ class BddOptions implements Serializable {
         'vanessa --settings ./tools/vrunner.json'
     ]
 
+    @JsonPropertyDescription("""Настройки сохранения базы после выполнения всех шагов
+    """)
+    ArchiveInfobaseOptions archiveInfobase
+
     @Override
     @NonCPS
     String toString() {
         return "BddOptions{" +
             "vrunnerSteps=" + vrunnerSteps +
-            '}';
+            "archiveInfobase=" + archiveInfobase +
+            "coverage=" + coverage +
+            "dbgsPort=" + dbgsPort +
+            '}'
     }
 }
